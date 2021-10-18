@@ -75,7 +75,7 @@ class ASM_8051:
 
     def delay_snippet(self, init, register):
         # single loop DJNZ
-        self.stack.append([Statement(label='delay', inst = 'mov', operands=(register, init)),
+        self.stack.append([Statement(label='delay', inst = 'mov', operands=(register, init.strip())),
                             Statement(label='loop', inst = 'djnz', operands=(register, 'loop')),
                             Statement(inst = 'ret')])
         return [
