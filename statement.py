@@ -4,7 +4,7 @@ from typing import Tuple
 class Statement:
     label: str = ""
     inst: str = ""
-    operands: Tuple[str] = ()
+    operands: Tuple[str] = ('',)
 
     def __repr__(self):
         if len(self.operands) == 2:
