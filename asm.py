@@ -7,6 +7,7 @@ class ASM_8051:
         self.source_code: str = ""
         self.script: str = script
         self.stack = []
+        self.subroutines = {}
 
     def clean_operands(self, a, b):
         a = a.strip()
@@ -37,7 +38,7 @@ class ASM_8051:
 
             if b[0].isdigit():
                 return [Statement(inst = 'mov', operands=(a, '#'+b))]
-            elif b[0] == '*':
+            elif b[0] == '~':
                 if b[1] == 'r':
                     if b[2] not in '01':
                         raise Exception("Only registers R0 and R1 are allowed")
