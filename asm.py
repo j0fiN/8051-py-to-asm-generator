@@ -75,12 +75,34 @@ class ASM_8051:
 
     def delay_snippet(self, init, register):
         # single loop DJNZ
-        self.stack.append([Statement(label='delay', inst = 'mov', operands=(register, init.strip())),
-                            Statement(label='loop', inst = 'djnz', operands=(register, 'loop')),
-                            Statement(inst = 'ret')])
-        return [
-            Statement(inst='acall', operands=('delay',))
-        ]
+        if  int(init) < 255:
+            self.stack.append([Statement(label='delay', inst = 'mov', operands=(register, "#"+init.strip())),
+                                Statement(label='loop', inst = 'djnz', operands=(register, 'loop')),
+                                Statement(inst = 'ret')])
+            return [
+                Statement(inst='acall', operands=('delay',))
+            ]
+        elif int(init) > 255 and int(init) < 65025:
+            init_2 = str(int(round(int(init) / 255)))
+
+            register_2 = int(register[-1]) + 1
+            if register_2 > 7:
+                register_2 = 'r0'
+            else:
+                register_2 = 'r' + str(register_2)
+            self.stack.append([
+                Statement(label='delay', inst = 'mov', operands=(register, "#"+"255")),
+                Statement(label='outer_loop', inst = 'mov', operands=(register_2, '#'+init_2)),
+                Statement(label='inner_loop', inst = 'djnz', operands=(register_2, 'inner_loop')),
+                Statement(inst = 'djnz', operands=(register, 'outer_loop')),
+                Statement(inst = 'ret')
+            ])
+            return [
+                Statement(inst='acall', operands=('delay',))
+            ]
+        else:
+            raise Exception("init value larger than 65025 in delay cannot be processed.")
+
         
 
 
@@ -88,11 +110,12 @@ class ASM_8051:
 
 
     def generate(self, case='lower'):
-        st = ""
+        st = "org 0000h\n"
         self.script = self.script.strip()
         lines = self.script.split('\n')
         for line in lines:
             if line == "":
+                st += '\n'
                 continue
             for statements in self.scan_statements(line):
                 st += str(statements) + '\n'
@@ -100,6 +123,7 @@ class ASM_8051:
             statements = self.stack.pop()
             for statement in statements:
                 st += str(statement) + '\n'
+        st += 'END\n'
         if case == 'upper':
             st = st.upper()
         
