@@ -9,10 +9,6 @@ Work in progress :construction:
 |------|------|------|------|
 | MOV  |   =   |   reg=reg, reg=val (val != 0)   |   NO   |
 |  ADD    |   +   |   a+reg, a+val   |   YES   |
-|   DELAY   |   =   |   delay:init = reg   |   YES   |
-|      |      |      |      |
-|      |      |      |      |
-|      |      |      |      |
-|      |      |      |      |
-|      |      |      |      |
-|      |      |      |      |
+|   DELAY   |   =   |   delay:'delay_1, rn, rn(optional)'   |   YES   |
+|   ACALL   |   label()   |   delay_1(), timer_long()    |   NO   |
+

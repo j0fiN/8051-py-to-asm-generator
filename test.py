@@ -4,4 +4,10 @@ a = 0
 a + r1
 b = a
 
-delay: 1000 = r2
+delay: 'delay_1, r0, r1' = 1000
+
+delay: 'delay_2, r1' = 12
+
+
+
+delay_1()
