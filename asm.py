@@ -65,7 +65,7 @@ class ASM_8051:
     
     def colon_functions(self, a, b):
         command, arguments = a.split(':')
-        self.clean_operands(command, arguments)
+        command, arguments = self.clean_operands(command, arguments)
         if command == 'delay':
             return self.delay_snippet(arguments, b)
         elif command == 'timer':
@@ -74,32 +74,32 @@ class ASM_8051:
 
 
 
-    def delay_snippet(self, init, register):
+    def delay_snippet(self, arguments, init):
         # single loop DJNZ
+        arguments = arguments[1:-1]
+        arguments = list(map(str.strip, arguments.split(',')))
         if  int(init) < 255:
-            self.stack.append([Statement(label='delay', inst = 'mov', operands=(register, "#"+init.strip())),
-                                Statement(label='loop', inst = 'djnz', operands=(register, 'loop')),
+            try: label, register_1 = arguments[0], arguments[1]
+            except: raise Exception('not enough arguments in annotation: label, rn, rn (optional) = init')
+            self.stack.append([Statement(label=label, inst = 'mov', operands=(register_1, "#" + init.strip())),
+                                Statement(label='loop', inst = 'djnz', operands=(register_1, 'loop')),
                                 Statement(inst = 'ret')])
             return [
-                Statement(inst='acall', operands=('delay',))
+                Statement(inst='acall', operands=(label,))
             ]
         elif int(init) > 255 and int(init) < 65025:
             init_2 = str(int(round(int(init) / 255)))
-
-            register_2 = int(register[-1]) + 1
-            if register_2 > 7:
-                register_2 = 'r0'
-            else:
-                register_2 = 'r' + str(register_2)
+            try: label, register_1, register_2 = arguments[0], arguments[1], arguments[2]
+            except: raise Exception('not enough arguments in annotation: label, rn, rn (optional) = init')
             self.stack.append([
-                Statement(label='delay', inst = 'mov', operands=(register, "#"+"255")),
+                Statement(label=label, inst = 'mov', operands=(register_1, "#"+"255")),
                 Statement(label='outer_loop', inst = 'mov', operands=(register_2, '#'+init_2)),
                 Statement(label='inner_loop', inst = 'djnz', operands=(register_2, 'inner_loop')),
-                Statement(inst = 'djnz', operands=(register, 'outer_loop')),
+                Statement(inst = 'djnz', operands=(register_1, 'outer_loop')),
                 Statement(inst = 'ret')
             ])
             return [
-                Statement(inst='acall', operands=('delay',))
+                Statement(inst='acall', operands=(label,))
             ]
         else:
             raise Exception("init value larger than 65025 in delay cannot be processed.")
@@ -124,6 +124,7 @@ class ASM_8051:
             statements = self.stack.pop()
             for statement in statements:
                 st += str(statement) + '\n'
+            st += '\n'
         st += 'END\n'
         if case == 'upper':
             st = st.upper()
