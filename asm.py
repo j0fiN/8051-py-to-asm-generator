@@ -7,7 +7,7 @@ class ASM_8051:
         self.source_code: str = ""
         self.script: str = script
         self.stack = []
-        self.subroutines = {}
+        self.subroutines = []
 
     def clean_operands(self, a, b):
         a = a.strip()
@@ -62,6 +62,19 @@ class ASM_8051:
                     Statement(inst = 'inc', operands=('r7',)),
                     Statement(label="no_carry"),
                     ]
+
+        elif '()' in line:
+            try:
+                a, _ = line.split('()')
+            except:
+                raise Exception('Syntax error in calling the subroutine')
+            if a in self.subroutines:
+                return [
+                    Statement(inst='acall', operands=(a,))
+                ]
+            else:
+                raise Exception(f"No subroutine with the label '{a}'.")
+
     
     def colon_functions(self, a, b):
         command, arguments = a.split(':')
@@ -84,6 +97,9 @@ class ASM_8051:
             self.stack.append([Statement(label=label, inst = 'mov', operands=(register_1, "#" + init.strip())),
                                 Statement(label='loop', inst = 'djnz', operands=(register_1, 'loop')),
                                 Statement(inst = 'ret')])
+            if label in self.subroutines:
+                raise Exception('Labels cannot be duplicated')
+            self.subroutines.append(label)
             return [
                 Statement(inst='acall', operands=(label,))
             ]
@@ -98,6 +114,9 @@ class ASM_8051:
                 Statement(inst = 'djnz', operands=(register_1, 'outer_loop')),
                 Statement(inst = 'ret')
             ])
+            if label in self.subroutines:
+                raise Exception('Labels cannot be duplicated')
+            self.subroutines.append(label)
             return [
                 Statement(inst='acall', operands=(label,))
             ]
@@ -118,8 +137,13 @@ class ASM_8051:
             if line == "":
                 st += '\n'
                 continue
+            if line[0] == "#":
+                st += ';' + line[1:] + '\n'
+                continue
             for statements in self.scan_statements(line):
                 st += str(statements) + '\n'
+        st += '\n'
+        st += '; subroutine(s)' + '\n'
         while self.stack:
             statements = self.stack.pop()
             for statement in statements:
